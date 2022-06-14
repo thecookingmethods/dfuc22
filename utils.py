@@ -1,6 +1,7 @@
 import functools
 import glob
 import os
+import json
 
 import imageio.v3 as iio
 import numpy as np
@@ -52,7 +53,7 @@ def read_imgs_with_masks(imgs_masks_pairs):
     return imgs, masks
 
 
-def get_foldwise_split(fold_no, number_of_folds, imgs_masks_pairs):
+def get_foldwise_split(fold_no, number_of_folds, imgs_masks_pairs, save_debug_file=False):
     rest, test_set = train_test_split(imgs_masks_pairs, test_size=0.2, random_state=12345)
     assert fold_no < number_of_folds
     val_sets = []
@@ -65,6 +66,12 @@ def get_foldwise_split(fold_no, number_of_folds, imgs_masks_pairs):
 
     # check if sets are disjunctive
     check_if_sets_are_disjunctive(current_train_set, current_val_set, test_set)
+
+    if save_debug_file:
+        with open(f'fold_{fold_no}_out_of_{number_of_folds}_debug_files_list.json', 'w') as f:
+            json.dump({'training': current_train_set, 'validation': current_val_set, 'test': test_set}, f, indent=4)
+
+    return current_train_set, current_val_set, test_set
 
     return current_train_set, current_val_set, test_set
 

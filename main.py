@@ -14,7 +14,7 @@ MASKS_DIR = '../DFUC2022_train_release/DFUC2022_train_masks'
 def main(fold_no, folds_count, batch_size, epochs, experiment_name):
     imgs_masks_pairs = load_files_paths(IMGS_DIR, MASKS_DIR)
 
-    train_set, val_set, test_set = get_foldwise_split(fold_no, folds_count, imgs_masks_pairs)
+    train_set, val_set, test_set = get_foldwise_split(fold_no, folds_count, imgs_masks_pairs, save_debug_file=True)
 
     train_imgs, train_masks = read_imgs_with_masks(train_set)
     val_imgs, val_masks = read_imgs_with_masks(val_set)
