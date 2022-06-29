@@ -25,7 +25,7 @@ def main(fold_no, folds_count, imgs_dir, masks_dir, batch_size, epochs, experime
     train_gen = DataGenerator(train_imgs, train_masks, batch_size, [320, 480], training=True)
     val_gen = DataGenerator(val_imgs, val_masks, batch_size, [320, 480])
 
-    net = Unetlike([320, 480, 3], f'{experiment_name}_{fold_no}')
+    net = Unetlike([320, 480, 6], f'{experiment_name}_{fold_no}')
     history = net.fit(train_gen, val_gen,
                       epochs=epochs,
                       initial_epoch=0,

@@ -61,7 +61,7 @@ def plus_jaccard_distance_loss(build_in_loss):
     def jaccard_sth(y_true, y_pred):
         jaccard_loss = jaccard_distance_loss(y_true, y_pred)
         sth_loss = build_in_loss(y_true, y_pred)
-        return 0.9*jaccard_loss + 0.1*sth_loss
+        return 0.2*jaccard_loss + 0.8*sth_loss
     return jaccard_sth
 
 
