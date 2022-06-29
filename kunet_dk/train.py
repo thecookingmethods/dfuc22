@@ -4,15 +4,18 @@ from matplotlib import pyplot as plt
 from unetlike import Unetlike
 from data_generator import DataGenerator
 from utils import load_files_paths, read_imgs_with_masks, get_foldwise_split, plot_and_save_fig
-from evaluator import Evaluator
 
 
-IMGS_DIR = '../DFUC2022_train_release/DFUC2022_train_images'
-MASKS_DIR = '../DFUC2022_train_release/DFUC2022_train_masks'
+def main(fold_no, folds_count, imgs_dir, masks_dir, batch_size, epochs, experiment_name):
+    print(f'fold_no: {fold_no}')
+    print(f'folds_count: {folds_count}')
+    print(f'imgs_dir: {imgs_dir}')
+    print(f'masks_dir: {masks_dir}')
+    print(f'batch_size: {batch_size}')
+    print(f'epochs: {epochs}')
+    print(f'experiment_name: {experiment_name}')
 
-
-def main(fold_no, folds_count, batch_size, epochs, experiment_name):
-    imgs_masks_pairs = load_files_paths(IMGS_DIR, MASKS_DIR)
+    imgs_masks_pairs = load_files_paths(imgs_dir, masks_dir)
 
     train_set, val_set, test_set = get_foldwise_split(fold_no, folds_count, imgs_masks_pairs, save_debug_file=True)
 
@@ -55,6 +58,8 @@ if __name__ == "__main__":
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument('fold_no', type=int, help='fold number to train.')
     arg_parser.add_argument('folds_count', type=int, help='folds count in experiment')
+    arg_parser.add_argument('imgs_dir', type=str, help='Directory with images.')
+    arg_parser.add_argument('masks_dir', type=str, help='Directory with masks.')
     arg_parser.add_argument('batch_size', type=int, help='size of batch during training')
     arg_parser.add_argument('epochs', type=int, help='number of epochs')
     arg_parser.add_argument('--experiment_name', type=str, default='segm',
@@ -62,6 +67,8 @@ if __name__ == "__main__":
     args = arg_parser.parse_args()
     main(args.fold_no,
          args.folds_count,
+         args.imgs_dir,
+         args.masks_dir,
          args.batch_size,
          args.epochs,
          args.experiment_name)

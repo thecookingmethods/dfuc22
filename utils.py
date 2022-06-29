@@ -68,10 +68,12 @@ def get_foldwise_split(fold_no, number_of_folds, imgs_masks_pairs, save_debug_fi
     check_if_sets_are_disjunctive(current_train_set, current_val_set, test_set)
 
     if save_debug_file:
-        with open(f'fold_{fold_no}_out_of_{number_of_folds}_debug_files_list.json', 'w') as f:
-            json.dump({'training': current_train_set, 'validation': current_val_set, 'test': test_set}, f, indent=4)
+        debug_train_set_list = [(os.path.split(train_example[0])[-1], os.path.split(train_example[1])[-1]) for train_example in current_train_set]
+        debug_val_set_list = [(os.path.split(val_example[0])[-1], os.path.split(val_example[1])[-1]) for val_example in current_val_set]
+        debug_test_set_list = [(os.path.split(test_example[0])[-1], os.path.split(test_example[1])[-1]) for test_example in test_set]
 
-    return current_train_set, current_val_set, test_set
+        with open(f'fold_{fold_no}_out_of_{number_of_folds}_debug_files_list.json', 'w') as f:
+            json.dump({'training': debug_train_set_list, 'validation': debug_val_set_list, 'test': debug_test_set_list}, f, indent=4)
 
     return current_train_set, current_val_set, test_set
 
@@ -98,3 +100,18 @@ def plot_and_save_fig(metrics, legend, xlabel, ylabel, name):
     plt.title('name')
     plt.savefig(f'./{name}.png')
     plt.close(fig)
+
+
+def calculate_dice(imgs, masks, pred_func, *pred_func_additional_args):
+    dice_sum = 0.0
+    examples_counter = 0
+    for i, (img, mask) in enumerate(zip(imgs, masks)):
+        print(f'{i + 1}/{len(imgs)}')
+        preds_masks = pred_func(img, mask, *pred_func_additional_args)
+        up = (2 * mask * preds_masks).sum()
+        down = (mask + preds_masks).sum()
+        dice = up / down
+        dice_sum += dice
+        examples_counter += 1.0
+    dice_per_image = dice_sum / examples_counter
+    return dice_per_image

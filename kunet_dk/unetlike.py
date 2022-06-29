@@ -1,6 +1,6 @@
 from tensorflow import keras
 from keras import layers
-from custom_metrics import dice_coef, plus_jaccard_distance_loss, dice, iou, jaccard_distance_loss, dice_coef_loss
+from kunet_dk.custom_metrics import dice_coef, plus_jaccard_distance_loss, dice
 
 
 class Unetlike:

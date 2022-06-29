@@ -29,9 +29,9 @@ class DataGenerator(keras.utils.Sequence):
                 iaa.Flipud(0.25),  # vertical flip
                 # Small gaussian blur with random sigma between 0 and 0.5.
                 # But we only blur about 10% of all images.
-                iaa.Sometimes(0.1, iaa.GaussianBlur(sigma=(0, 0.5))),
+                #iaa.Sometimes(0.1, iaa.GaussianBlur(sigma=(0, 0.5))),
                 # Strengthen or weaken the contrast in each image.
-                iaa.Sometimes(0.2, iaa.LinearContrast((0.95, 1.1))),
+                #iaa.Sometimes(0.2, iaa.LinearContrast((0.95, 1.1))),
                 # Add gaussian noise.
                 # For 50% of all images, we sample the noise once per pixel.
                 # For the other 50% of all images, we sample the noise per pixel AND
@@ -73,7 +73,11 @@ class DataGenerator(keras.utils.Sequence):
         x_out = np.zeros((current_batch_size, *self._network_input_wh, self._image_channels), dtype=np.float32)
         y_out = np.zeros((current_batch_size, *self._network_input_wh, 1), dtype=np.float32)
         for a in range(x_out.shape[0]):
-            rows_offset, cols_offset = [(y - x) // 2 for x, y in zip(self._network_input_wh, self._image_wh)]
+            if not self._training:
+                rows_offset, cols_offset = [(y - x) // 2 for x, y in zip(self._network_input_wh, self._image_wh)]
+            else:
+                rows_offset = np.random.randint(0, self._image_wh[0] - self._network_input_wh[0])
+                cols_offset = np.random.randint(0, self._image_wh[1] - self._network_input_wh[1])
             x_out[a, :, :, :] = x[a, rows_offset:rows_offset + self._network_input_wh[0],
                                      cols_offset:cols_offset + self._network_input_wh[1], :]
             y_out[a, :, :, :] = y[a, rows_offset:rows_offset + self._network_input_wh[0],
