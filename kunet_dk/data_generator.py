@@ -3,6 +3,7 @@ import math
 import numpy as np
 from imgaug import augmenters as iaa
 from tensorflow import keras
+from skimage import color
 
 from utils import norm_img
 
@@ -15,7 +16,7 @@ class DataGenerator(keras.utils.Sequence):
 
         self._network_input_wh = network_input_wh
         self._image_wh = self._images[0].shape[:-1]
-        self._image_channels = self._images[0].shape[-1]
+        self._image_channels = self._images[0].shape[-1] * 2  # rgb + lab
 
         self._no_of_examples = len(self._images)
 
@@ -25,25 +26,9 @@ class DataGenerator(keras.utils.Sequence):
         if self._training:
             self._aug = iaa.Sequential([
 
-                iaa.Fliplr(0.25),  # horizontal flips
-                iaa.Flipud(0.25),  # vertical flip
-                # Small gaussian blur with random sigma between 0 and 0.5.
-                # But we only blur about 10% of all images.
-                #iaa.Sometimes(0.1, iaa.GaussianBlur(sigma=(0, 0.5))),
-                # Strengthen or weaken the contrast in each image.
-                #iaa.Sometimes(0.2, iaa.LinearContrast((0.95, 1.1))),
-                # Add gaussian noise.
-                # For 50% of all images, we sample the noise once per pixel.
-                # For the other 50% of all images, we sample the noise per pixel AND
-                # channel. This can change the color (not only brightness) of the
-                # pixels.
-                #iaa.AdditiveGaussianNoise(loc=0, scale=(0.0, 0.05 * 255), per_channel=0.5),
-                # Make some images brighter and some darker.
-                # In 20% of all cases, we sample the multiplier once per channel,
-                # which can end up changing the color of the images.
+                iaa.Fliplr(0.25),
+                iaa.Flipud(0.25),
                 iaa.Sometimes(0.5, iaa.Multiply((0.9, 1.1), per_channel=0.2)),
-                # Apply affine transformations to each image.
-                # Scale/zoom them, translate/move them, rotate them and shear them.
                 iaa.Affine(
                     scale={"x": (0.8, 1.2), "y": (0.8, 1.2)},
                     translate_percent={"x": (-0.2, 0.2), "y": (-0.2, 0.2)},
@@ -78,14 +63,22 @@ class DataGenerator(keras.utils.Sequence):
             else:
                 rows_offset = np.random.randint(0, self._image_wh[0] - self._network_input_wh[0])
                 cols_offset = np.random.randint(0, self._image_wh[1] - self._network_input_wh[1])
-            x_out[a, :, :, :] = x[a, rows_offset:rows_offset + self._network_input_wh[0],
-                                     cols_offset:cols_offset + self._network_input_wh[1], :]
-            y_out[a, :, :, :] = y[a, rows_offset:rows_offset + self._network_input_wh[0],
+            x_rgb = x[a, rows_offset:rows_offset + self._network_input_wh[0],
                                      cols_offset:cols_offset + self._network_input_wh[1], :]
 
-        x_out = x_out.astype(np.float32)
-        y_out = y_out.astype(np.float32)
-        x_out = norm_img(x_out)
-        y_out = norm_img(y_out)
+            x_lab = color.rgb2lab(x_rgb)
+
+            x_rgb = norm_img(x_rgb.astype(np.float32))
+            x_lab[:, :, 0] = x_lab[:, :, 0] / 100.0
+            x_lab[:, :, 1] = (x_lab[:, :, 1] + 127.0) / 255.0
+            x_lab[:, :, 2] = (x_lab[:, :, 2] + 127.0) / 255.0
+
+            x_out[a, :, :, :3] = x_rgb
+            x_out[a, :, :, 3:] = x_lab
+
+            mask = y[a, rows_offset:rows_offset + self._network_input_wh[0],
+                   cols_offset:cols_offset + self._network_input_wh[1], :]
+            mask = norm_img(mask.astype(np.float32))
+            y_out[a, :, :, :] = mask
 
         return x_out, y_out

@@ -1,6 +1,7 @@
 import argparse
 
 import numpy as np
+from skimage import color
 
 from unetlike import Unetlike
 from utils import load_files_paths, read_imgs_with_masks, get_foldwise_split, calculate_dice, norm_img
@@ -17,9 +18,12 @@ def main(folds_count, imgs_dir, masks_dir, experiment_name):
 
     models = []
     for fold_no in range(folds_count):
-        model = Unetlike([320, 480, 3], f'{experiment_name}_{fold_no}')
-        model.load(f'{experiment_name}_{fold_no}.h5')
-        models.append(model)
+        model = Unetlike([320, 480, 6], f'{experiment_name}_{fold_no}')
+        try:
+            model.load(f'{experiment_name}_{fold_no}.h5')
+            models.append(model)
+        except OSError:
+            print(f'No model for fold {fold_no}.')
 
     test_imgs, test_masks = read_imgs_with_masks(test_set)
 
@@ -30,12 +34,24 @@ def main(folds_count, imgs_dir, masks_dir, experiment_name):
 def pred_func(img, mask, *pred_func_additional_args):
     models = pred_func_additional_args[0][0]
 
+    img_out = np.zeros([*img.shape[:2], 6], dtype=np.float32)
+
+    img_lab = color.rgb2lab(img)
+
     img = img.astype(np.float32)
     img = norm_img(img)
-    top_right = img[:320, :480, :]
-    top_left = img[:320, img.shape[1] - 480:, :]
-    bottom_right = img[img.shape[0] - 320:, :480, :]
-    bottom_left = img[img.shape[0] - 320:, img.shape[1] - 480:, :]
+
+    img_lab[:, :, 0] = img_lab[:, :, 0] / 100.0
+    img_lab[:, :, 1] = (img_lab[:, :, 1] + 127.0) / 255.0
+    img_lab[:, :, 2] = (img_lab[:, :, 2] + 127.0) / 255.0
+
+    img_out[:, :, :3] = img
+    img_out[:, :, 3:] = img_lab
+
+    top_right = img_out[:320, :480, :]
+    top_left = img_out[:320, img.shape[1] - 480:, :]
+    bottom_right = img_out[img.shape[0] - 320:, :480, :]
+    bottom_left = img_out[img.shape[0] - 320:, img.shape[1] - 480:, :]
 
     top_right.shape = [1, *top_right.shape]
     top_left.shape = [1, *top_left.shape]
