@@ -25,7 +25,7 @@ def main(fold_no, folds_count, imgs_dir, masks_dir, batch_size, epochs, experime
     train_gen = DataGenerator(train_imgs, train_masks, batch_size, [320, 480], training=True)
     val_gen = DataGenerator(val_imgs, val_masks, batch_size, [320, 480])
 
-    net = Unetlike([320, 480, 3], f'{experiment_name}_{fold_no}')
+    net = Unetlike([320, 480, 6], f'{experiment_name}_{fold_no}')
     history = net.fit(train_gen, val_gen,
                       epochs=epochs,
                       initial_epoch=0,
@@ -42,16 +42,15 @@ def main(fold_no, folds_count, imgs_dir, masks_dir, batch_size, epochs, experime
                       ['training', 'validation'],
                       'epoch', 'accuracy', f'fold_{fold_no}_accuracy_{experiment_name}')
 
-    test_imgs, test_masks = read_imgs_with_masks(test_set)
-    evaluator = Evaluator([net])
+    #test_imgs, test_masks = read_imgs_with_masks(test_set)
 
-    print('testing on test set')
-    metrics = evaluator.eval_set(test_imgs, test_masks)
-    print(f'avg dice per image on test set = {metrics}')
+    #print('testing on test set')
+    #metrics = evaluator.eval_set(test_imgs, test_masks)
+    #print(f'avg dice per image on test set = {metrics}')
 
-    print('testing on val set')
-    metrics = evaluator.eval_set(val_imgs, val_masks)
-    print(f'avg dice per image on val set = {metrics}')
+    #print('testing on val set')
+    #metrics = evaluator.eval_set(val_imgs, val_masks)
+    #print(f'avg dice per image on val set = {metrics}')
 
 
 if __name__ == "__main__":

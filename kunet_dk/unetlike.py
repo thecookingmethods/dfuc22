@@ -1,6 +1,6 @@
 from tensorflow import keras
 from keras import layers
-from kunet_dk.custom_metrics import dice_coef, plus_jaccard_distance_loss, dice
+from custom_metrics import dice_coef, plus_jaccard_distance_loss, dice
 
 
 class Unetlike:
@@ -12,7 +12,7 @@ class Unetlike:
 
     def __init__(self, img_size, model_name):
         #  set some params
-        self._initial_lr = 1e-4
+        self._initial_lr = 1e-3
 
         self._model_file_name = f'{model_name}.h5'
 

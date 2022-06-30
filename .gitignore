@@ -1,6 +1,9 @@
 # models
 *.h5
 
+# per user
+rsync_to_prometheus.sh
+
 # pycharm
 .idea
 

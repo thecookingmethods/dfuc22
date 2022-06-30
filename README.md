@@ -35,8 +35,14 @@ Swoje eksperymenty proponuję stawiać na osobnych branczach w osobnych kataloga
 <tr>
     <td>kunet_dk</td>
     <td>xception unet oparty o tutorial z kerasa https://keras.io/examples/vision/oxford_pets_image_segmentation/</td>
-    <td>0.6894</td>
-    <td>0.5890 <br /> https://dfuc2022.grand-challenge.org/evaluation/95564700-22ee-40ee-bd96-c38455ef1f22/</td>
+    <td>
+        1. 0.6894<br />
+        2. 0.6764 - wejście rozszerzone o przestrzeń L*a*b, zmiana proporcji bc i jaccard w f. kosztu (na repo)
+    </td>
+    <td>
+        1. 0.5890 <br /> https://dfuc2022.grand-challenge.org/evaluation/95564700-22ee-40ee-bd96-c38455ef1f22/
+        2. 0.5969 <br /> https://dfuc2022.grand-challenge.org/evaluation/07e57526-d233-4207-ba19-650afe7ff4a0/ 
+    </td>
     <td>-</td>
 </tr>
 <tr>
