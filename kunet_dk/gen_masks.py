@@ -6,6 +6,7 @@ import glob
 from unetlike import Unetlike
 from utils import norm_img
 
+from skimage import color
 import imageio.v3 as iio
 import numpy as np
 
@@ -15,11 +16,11 @@ DEST_MASKS_DIR = '/home/darekk/dev/dfuc2022_challenge/DFUC2022_val_release_preds
 
 def main():
     folds_count = 5
-    experiment_name = 'long_train_less_aug'
+    experiment_name = 'change_ratio_of_loss_add_lab_as_input'
 
     models = []
     for fold_no in range(folds_count):
-        model = Unetlike([320, 480, 3], f'{experiment_name}_{fold_no}')
+        model = Unetlike([320, 480, 6], f'{experiment_name}_{fold_no}')
         model.load(f'{experiment_name}_{fold_no}.h5')
         models.append(model)
 
@@ -34,8 +35,23 @@ def save_masks(imgs, dest_masks_dir, models):
     folds_count = len(models)
     for i, (code, img) in enumerate(imgs.items()):
         print(f'{i + 1}/{len(imgs)}: {code}')
+
+        img_out = np.zeros([*img.shape[:2], 6], dtype=np.float32)
+
+        img_lab = color.rgb2lab(img)
+
         img = img.astype(np.float32)
         img = norm_img(img)
+
+        img_lab[:, :, 0] = img_lab[:, :, 0] / 100.0
+        img_lab[:, :, 1] = (img_lab[:, :, 1] + 127.0) / 255.0
+        img_lab[:, :, 2] = (img_lab[:, :, 2] + 127.0) / 255.0
+
+        img_out[:, :, :3] = img
+        img_out[:, :, 3:] = img_lab
+
+        img = img_out
+
         top_right = img[:320, :480, :]
         top_left = img[:320, img.shape[1] - 480:, :]
         bottom_right = img[img.shape[0] - 320:, :480, :]
