@@ -1,3 +1,5 @@
+import os
+
 from tensorflow import keras
 from keras import layers
 from custom_metrics import dice_coef, plus_jaccard_distance_loss, dice
@@ -10,11 +12,12 @@ class Unetlike:
         'jaccard_sth': plus_jaccard_distance_loss(keras.losses.BinaryCrossentropy())
     }
 
-    def __init__(self, img_size, model_name):
+    def __init__(self, img_size, model_name, model_save_dir):
         #  set some params
         self._initial_lr = 1e-3
 
-        self._model_file_name = f'{model_name}.h5'
+        self._model_file_name = f'{model_name}'
+        self._model_save_dir = model_save_dir
 
         #  create model
         self._model = self._create_model(img_size)
@@ -45,7 +48,8 @@ class Unetlike:
             max_queue_size, workers, use_multiprocessing,
             initial_epoch):
         callbacks = [
-            keras.callbacks.ModelCheckpoint(self._model_file_name, save_best_only=True)
+            keras.callbacks.ModelCheckpoint(
+                os.path.join(self._model_save_dir, self._model_file_name), save_best_only=True)
         ]
         history = self._model.fit(train_gen,
                                   epochs=epochs+initial_epoch,

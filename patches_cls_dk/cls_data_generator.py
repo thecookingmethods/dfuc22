@@ -8,7 +8,7 @@ from skimage.measure import regionprops, label
 from utils import norm_img
 
 
-class DataGenerator(keras.utils.Sequence):
+class ClsDataGenerator(keras.utils.Sequence):
     def __init__(self, images, masks, batch_size, network_input_hw, channels, training=False):
         assert batch_size % 2 == 0, "batch size must be even"
         self._batch_size = batch_size
@@ -71,7 +71,7 @@ class DataGenerator(keras.utils.Sequence):
                     break
 
             x_out[a, :, :, :] = x[a, rows_offset:rows_offset + self._network_input_hw[0],
-                                cols_offset:cols_offset + self._network_input_hw[1], :]
+                                  cols_offset:cols_offset + self._network_input_hw[1], :]
             y_out[a, 0] = 0.0
 
             a += 1
@@ -86,24 +86,47 @@ class DataGenerator(keras.utils.Sequence):
                 cols_offset = np.random.randint(0, self._image_hw[1] - self._network_input_hw[1])
             else:
                 region_idx = np.random.randint(len(regions))
-                area = regions[region_idx].area
-                from_hw = regions[region_idx].bbox[:2]
-                to_hw = regions[region_idx].bbox[2:]
-                rows_offset = np.random.randint(from_hw[0], to_hw[0])
+                center_hw = [int(x) for x in regions[region_idx].centroid]
+                rnd_center_h = np.random.randint(center_hw[0] - self._network_input_hw[0] // 4,
+                                                 center_hw[0] + self._network_input_hw[0] // 4)
+                rnd_center_w = np.random.randint(center_hw[1] - self._network_input_hw[1] // 4,
+                                                 center_hw[1] + self._network_input_hw[1] // 4)
+
+                rows_offset = rnd_center_h - self._network_input_hw[0]//2
                 if rows_offset + self._network_input_hw[0] > self._image_hw[0]:
                     rows_offset = self._image_hw[0] - self._network_input_hw[0]
-                cols_offset = np.random.randint(from_hw[1], to_hw[1])
+                elif rows_offset < 0:
+                    rows_offset = 0
+
+                cols_offset = rnd_center_w-self._network_input_hw[1]//2
                 if cols_offset + self._network_input_hw[1] > self._image_hw[1]:
                     cols_offset = self._image_hw[1] - self._network_input_hw[1]
+                elif cols_offset < 0:
+                    cols_offset = 0
 
-            x_out[a, :, :, :] = x[a, rows_offset:rows_offset + self._network_input_hw[1],
-                                cols_offset:cols_offset + self._network_input_hw[0], :]
+            x_out[a, :, :, :] = x[a, rows_offset:rows_offset + self._network_input_hw[0],
+                                  cols_offset:cols_offset + self._network_input_hw[1], :]
+
+            mask_out = masks[a, rows_offset:rows_offset + self._network_input_hw[0],
+                             cols_offset:cols_offset + self._network_input_hw[1], :]
+
+            outer_circle = self._unit_square(mask_out.shape[0]-mask_out.shape[0]//20, mask_out.shape[0])
+            inner_circle = self._unit_square(mask_out.shape[0]-mask_out.shape[0]//10, mask_out.shape[0])
+
+            if mask_out.sum() == 0.0:
+                y_out[a, 0] = 0.0
+            elif (mask_out[:, :, 0] * outer_circle).sum() == 0.0:
+                y_out[a, 0] = 0.8
+            elif (mask_out[:, :, 0] * inner_circle).sum() > 0.0:
+                y_out[a, 0] = 1.0
+            else:
+                y_out[a, 0] = 1.0
 
             #surface_on_patch = masks[a, rows_offset:rows_offset + self._network_input_wh[1],
             #                   cols_offset:cols_offset + self._network_input_wh[0], :].sum() / 255.0
 
             #if surface_on_patch > 0.2 * area:
-            y_out[a, 0] = 1.0
+            #y_out[a, 0] = 1.0
 
             a += 1
 
@@ -111,3 +134,27 @@ class DataGenerator(keras.utils.Sequence):
         x_out = norm_img(x_out)
 
         return x_out, y_out
+
+    @staticmethod
+    def _unit_circle(r, hw):
+        d = hw
+        rx, ry = d / 2, d / 2
+        x, y = np.indices((d, d))
+        rx_x = rx - x
+        ry_y = ry - y
+        hypot = np.hypot(rx_x, ry_y)
+        abs = np.abs(hypot)
+        ones = np.zeros([hw, hw], dtype=np.float32)
+        ones[abs < r] = 1.0
+        return ones
+
+    @staticmethod
+    def _unit_square(hw_square, hw_image):
+
+        x, y = np.indices((hw_image, hw_image))
+        rx, ry = hw_image / 2, hw_image / 2
+        rx_x = np.abs(rx - x)
+        ry_y = np.abs(ry - y)
+        ones = (rx_x < hw_square/2).astype(int) * (ry_y < hw_square/2).astype(int)
+        return ones
+

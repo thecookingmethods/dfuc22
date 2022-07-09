@@ -3,6 +3,7 @@
 
 # per user
 rsync_to_prometheus.sh
+*experiment
 
 # pycharm
 .idea

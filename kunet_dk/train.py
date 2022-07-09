@@ -1,12 +1,26 @@
 import argparse
-from matplotlib import pyplot as plt
+import os
 
-from unetlike import Unetlike
-from data_generator import DataGenerator
-from utils import load_files_paths, read_imgs_with_masks, get_foldwise_split, plot_and_save_fig
+from kunet_dk.unetlike import Unetlike
+from kunet_dk.data_generator import DataGenerator
+from utils import load_files_paths, read_imgs_with_masks, get_foldwise_split, plot_and_save_fig, \
+    get_experiment_model_name, get_experiment_dir
 
 
-def main(fold_no, folds_count, imgs_dir, masks_dir, batch_size, epochs, experiment_name):
+def main(config):
+    fold_no = config['kunet_dk']['fold_no']
+    folds_count = config['kunet_dk']['folds_count']
+    imgs_dir = config['kunet_dk']['imgs_dir']
+    masks_dir = config['kunet_dk']['masks_dir']
+    batch_size = config['kunet_dk']['batch_size']
+    epochs = config['kunet_dk']['epochs']
+    experiment_name = config['kunet_dk']['experiment_name']
+    experiment_type = config['experiment_type']
+    experiment_artifacts_root_dir = config['experiment_artifacts_root_dir']
+
+    experiment_dir = get_experiment_dir(experiment_artifacts_root_dir, experiment_name, experiment_type)
+    os.makedirs(experiment_dir, exist_ok=True)
+
     print(f'fold_no: {fold_no}')
     print(f'folds_count: {folds_count}')
     print(f'imgs_dir: {imgs_dir}')
@@ -14,6 +28,8 @@ def main(fold_no, folds_count, imgs_dir, masks_dir, batch_size, epochs, experime
     print(f'batch_size: {batch_size}')
     print(f'epochs: {epochs}')
     print(f'experiment_name: {experiment_name}')
+    print(f'experiment_type: {experiment_type}')
+    print(f'experiment_artifacts_dir: {experiment_artifacts_root_dir}')
 
     imgs_masks_pairs = load_files_paths(imgs_dir, masks_dir)
 
@@ -25,7 +41,7 @@ def main(fold_no, folds_count, imgs_dir, masks_dir, batch_size, epochs, experime
     train_gen = DataGenerator(train_imgs, train_masks, batch_size, [320, 480], training=True)
     val_gen = DataGenerator(val_imgs, val_masks, batch_size, [320, 480])
 
-    net = Unetlike([320, 480, 6], f'{experiment_name}_{fold_no}')
+    net = Unetlike([320, 480, 6], get_experiment_model_name(experiment_name, fold_no), experiment_dir)
     history = net.fit(train_gen, val_gen,
                       epochs=epochs,
                       initial_epoch=0,
@@ -36,11 +52,13 @@ def main(fold_no, folds_count, imgs_dir, masks_dir, batch_size, epochs, experime
 
     plot_and_save_fig([history.history['loss'], history.history['val_loss']],
                       ['training', 'validation'],
-                      'epoch', 'loss', f'fold_{fold_no}_loss_{experiment_name}')
+                      'epoch', 'loss',
+                      os.path.join(experiment_dir, f'fold_{fold_no}_loss_{experiment_name}'))
 
     plot_and_save_fig([history.history['accuracy'], history.history['val_accuracy']],
                       ['training', 'validation'],
-                      'epoch', 'accuracy', f'fold_{fold_no}_accuracy_{experiment_name}')
+                      'epoch', 'accuracy',
+                      os.path.join(experiment_dir, f'fold_{fold_no}_accuracy_{experiment_name}'))
 
     #test_imgs, test_masks = read_imgs_with_masks(test_set)
 

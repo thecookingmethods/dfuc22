@@ -1,8 +1,8 @@
 import argparse
 import os
 
-from patches_cls_dk.resnet_cls import ResnetCls
-from patches_cls_dk.cls_data_generator import ClsDataGenerator
+from patches_cls_dk.segm_data_generator import SegmDataGenerator
+from patches_cls_dk.unetlike_segm import UnetlikeSegm
 from utils import load_files_paths, read_imgs_with_masks, get_foldwise_split, plot_and_save_fig, \
     get_experiment_model_name, get_experiment_dir
 
@@ -41,10 +41,10 @@ def main(config):
 
     val_imgs, val_masks = read_imgs_with_masks(val_set)
 
-    train_gen = ClsDataGenerator(train_imgs, train_masks, batch_size, patch_size, 3, training=True)
-    val_gen = ClsDataGenerator(val_imgs, val_masks, batch_size, patch_size, 3)
+    train_gen = SegmDataGenerator(train_imgs, train_masks, batch_size, patch_size, 3, training=True)
+    val_gen = SegmDataGenerator(val_imgs, val_masks, batch_size, patch_size, 3)
 
-    net = ResnetCls([*patch_size, 3], get_experiment_model_name(experiment_name, fold_no), experiment_dir)
+    net = UnetlikeSegm([*patch_size, 3], get_experiment_model_name(experiment_name, fold_no), experiment_dir)
     history = net.fit(train_gen, val_gen,
                       epochs=epochs,
                       initial_epoch=0,

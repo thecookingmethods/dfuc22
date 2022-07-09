@@ -1,0 +1,26 @@
+{
+  "experiment_type": "patches_cls_dk",
+  "experiment_artifacts_root_dir": "./",
+
+  "patches_cls_dk": {
+    "fold_no": 0,
+    "folds_count": 5,
+    "imgs_dir": "/home/darekk/dev/dfuc2022_challenge/DFUC2022_train_release/DFUC2022_train_images",
+    "masks_dir": "/home/darekk/dev/dfuc2022_challenge/DFUC2022_train_release/DFUC2022_train_masks",
+    "batch_size": 8,
+    "epochs": 10,
+    "experiment_name": "test",
+    "phase": "segm",
+    "patch_size": [128, 128]
+  },
+
+  "kunet_dk": {
+    "fold_no": 1,
+    "folds_count": 5,
+    "imgs_dir": "/home/darekk/dev/dfuc2022_challenge/DFUC2022_train_release/DFUC2022_train_images",
+    "masks_dir": "/home/darekk/dev/dfuc2022_challenge/DFUC2022_train_release/DFUC2022_train_masks",
+    "batch_size": 8,
+    "epochs": 2,
+    "experiment_name": "test"
+  }
+}
