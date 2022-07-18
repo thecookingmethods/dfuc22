@@ -4,7 +4,7 @@ import os
 import glob
 
 from kunet_dk.unetlike import Unetlike
-from utils import norm_img, get_experiment_model_name, get_experiment_dir
+from utils import norm_img, get_experiment_model_name, get_experiment_dir, read_images, load_files
 
 from skimage import color
 import imageio.v3 as iio
@@ -110,24 +110,6 @@ def save_masks(imgs, dest_masks_dir, models):
         preds = preds.astype(np.uint8)
 
         iio.imwrite(os.path.join(dest_masks_dir, f'{code}.png'), preds)
-
-
-def load_files(dataset_dir):
-    img_file_pattern = "*.jpg"
-    imgs_files_paths = list(sorted(glob.glob(os.path.join(dataset_dir, img_file_pattern))))
-    return imgs_files_paths
-
-
-def read_images(files_paths):
-    imgs = {}
-
-    for img_path in files_paths:
-        img = iio.imread(img_path)
-
-        code = os.path.split(img_path)[-1].split('.')[0]
-
-        imgs[code] = img
-    return imgs
 
 
 if __name__ == "__main__":

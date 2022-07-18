@@ -1,5 +1,5 @@
 {
-  "experiment_type": "kunet_dk",
+  "experiment_type": "patches_cls_dk",
   "experiment_artifacts_root_dir": "./",
 
   "kunet_dk": {

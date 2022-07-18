@@ -7,15 +7,18 @@ import os
 import cv2
 import numpy as np
 from matplotlib import pyplot as plt
-
+import imageio.v3 as iio
 from patches_cls_dk.resnet_cls import ResnetCls
 from patches_cls_dk.unetlike_segm import UnetlikeSegm
 from utils import load_files_paths, read_imgs_with_masks, get_foldwise_split, norm_img, \
-    get_experiment_dir, get_experiment_model_name
+    get_experiment_dir, get_experiment_model_name, read_images, load_files
 from skimage.measure import regionprops, label
+DEST_MASKS_DIR = '/home/darekk/dev/dfuc2022_challenge/DFUC2022_val_release_preds_masks_yolo'
+DATASET_DIR = '/home/darekk/dev/dfuc2022_challenge/DFUC2022_val_release'
 
 
 def main(config):
+    os.makedirs(DEST_MASKS_DIR, exist_ok=True)
     folds_count = config['patches_cls_dk']['folds_count']
     imgs_dir = config['patches_cls_dk']['imgs_dir']
     masks_dir = config['patches_cls_dk']['masks_dir']
@@ -64,19 +67,12 @@ def main(config):
         except IOError:
             print(f'No segm model for fold {fold_no}')
 
-    test_imgs, test_masks = read_imgs_with_masks(test_set)
+    files_paths = load_files(DATASET_DIR)
+    imgs = read_images(files_paths)
 
-    img_h, img_w = test_imgs.shape[:2]
+    for i, (code, img) in enumerate(imgs.items()):
 
-    tp = 0
-    fp = 0
-    tn = 0
-    fn = 0
-
-    dice_sum = 0.0
-    for i, (img, mask) in enumerate(zip(test_imgs, test_masks)):
-
-        print(f'calculating {i + 1}/{len(test_imgs)}')
+        print(f'calculating {i + 1}/{len(imgs)}')
         img_256 = np.array(img)
         img = norm_img(img.astype(np.float32))
         mask_probabs = np.zeros(img.shape[:2], dtype=np.float32)
@@ -118,11 +114,8 @@ def main(config):
 
         indexes = cv2.dnn.NMSBoxes(boxes, confidences, 0.4, 0.6)
 
-        labeled_mask = label(mask[:, :, 0] / 255.0)
-        regions = regionprops(labeled_mask)
 
-
-        boxes_mask = np.zeros(mask.shape, dtype=np.float32)
+        boxes_mask = np.zeros((img.shape[0], img.shape[1], 1), dtype=np.float32)
         for i in range(len(boxes)):
             if i in indexes:
                 w, h, size_w, size_h = boxes[i]
@@ -131,9 +124,6 @@ def main(config):
         labeled_boxes_mask = label(boxes_mask[:, :, 0])
         boxes_regions = regionprops(labeled_boxes_mask)
         merged_yolo_boxes = [region.bbox for region in boxes_regions]
-
-
-        regions_len = len(regions)
 
         for i in range(len(merged_yolo_boxes)):
 
@@ -170,46 +160,15 @@ def main(config):
             mask_overlap[from_h:to_h, from_w:to_w] += 1
             pass
 
-            '''
-            yolo_region = np.zeros(mask.shape, dtype=np.float32)
-            yolo_region[from_h:to_h, from_w:to_w] = 1.0
-            found = 0
-
-            for region in regions:
-                mask_region = np.zeros(mask.shape, dtype=np.float32)
-                mask_region[region.bbox[0]:region.bbox[2], region.bbox[1]:region.bbox[3]] = 1.0
-
-                if (mask_region * yolo_region).sum() > 0.0:
-                    found = 1
-                    regions_len -= 1
-                    break
-
-            if found == 1:
-                tp += 1
-            else:
-                fp += 1
-
-        fn += regions_len
-        '''
-
         mask_overlap[mask_overlap == 0] = 1
         mask_probabs /= mask_overlap
 
         mask_preds = np.round(mask_probabs)
 
-        up = (2 * mask[:,:,0] * mask_preds).sum()
-        down = (mask[:,:,0] + mask_preds).sum()
-        dice = up / down
-        dice_sum += dice
+        mask_preds *= 255.0
+        mask_preds = mask_preds.astype(np.uint8)
 
-    #se = tp / (tp + fn)
-    #pp = tp / (tp + fp)
+        iio.imwrite(os.path.join(DEST_MASKS_DIR, f'{code}.png'), mask_preds)
 
-    #print(f'se = {se}')
-    #print(f'pp = {pp}')
-
-    dice_per_image = dice_sum / len(test_imgs)
-
-    print(f'dice_per_image: {dice_per_image}')
 
 

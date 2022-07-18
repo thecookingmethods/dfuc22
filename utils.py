@@ -123,3 +123,21 @@ def get_experiment_dir(experiment_artifacts_root_dir, experiment_name, experimen
 
 def get_experiment_model_name(experiment_name, fold_no):
     return f'{experiment_name}_{fold_no}.h5'
+
+
+def read_images(files_paths):
+    imgs = {}
+
+    for img_path in files_paths:
+        img = iio.imread(img_path)
+
+        code = os.path.split(img_path)[-1].split('.')[0]
+
+        imgs[code] = img
+    return imgs
+
+
+def load_files(dataset_dir):
+    img_file_pattern = "*.jpg"
+    imgs_files_paths = list(sorted(glob.glob(os.path.join(dataset_dir, img_file_pattern))))
+    return imgs_files_paths

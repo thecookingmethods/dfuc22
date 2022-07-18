@@ -17,11 +17,13 @@ def main():
     imgs_masks_pairs = load_files_paths(imgs_dir, masks_dir)
     train_set, val_set, test_set = get_foldwise_split(0, 5, imgs_masks_pairs, save_debug_file=True)
 
-    train_imgs, train_masks = read_imgs_with_masks(train_set)
-    val_imgs, val_masks = read_imgs_with_masks(val_set)
+    #train_imgs, train_masks = read_imgs_with_masks(train_set)
+    #val_imgs, val_masks = read_imgs_with_masks(val_set)
+    test_imgs, test_masks = read_imgs_with_masks(test_set)
+    imgs, masks = test_imgs, test_masks
 
-    imgs = np.concatenate([train_imgs, val_imgs], axis=0)
-    masks = np.concatenate([train_masks, val_masks], axis=0)
+    #imgs = np.concatenate([train_imgs, val_imgs], axis=0)
+    #masks = np.concatenate([train_masks, val_masks], axis=0)
 
     os.makedirs(result_dir, exist_ok=True)
 
