@@ -1,22 +1,22 @@
 {
-  "experiment_type": "patches_cls_dk",
+  "experiment_type": "kunet_dk",
   "experiment_artifacts_root_dir": "./",
+
+  "kunet_dk": {
+    "folds_count": 5,
+    "imgs_dir": "/home/darekk/dev/dfuc2022_challenge/DFUC2022_train_release/DFUC2022_train_images",
+    "masks_dir": "/home/darekk/dev/dfuc2022_challenge/DFUC2022_train_release/DFUC2022_train_masks",
+    "experiment_name": "more_jaccard"
+  },
 
   "patches_cls_dk": {
     "folds_count": 5,
     "imgs_dir": "/home/darekk/dev/dfuc2022_challenge/DFUC2022_train_release/DFUC2022_train_images",
     "masks_dir": "/home/darekk/dev/dfuc2022_challenge/DFUC2022_train_release/DFUC2022_train_masks",
     "experiment_cls_name": "lr4_newer_gen",
-    "experiment_segm_name": "segm_on_patches",
+    "experiment_segm_name": "test",
     "phase": "pipeline",
-    "patch_size": [128, 128],
+    "patch_size": [256, 256],
     "stride": [128, 128]
-  },
-
-  "kunet_dk": {
-    "folds_count": 5,
-    "imgs_dir": "/home/darekk/dev/dfuc2022_challenge/DFUC2022_train_release/DFUC2022_train_images",
-    "masks_dir": "/home/darekk/dev/dfuc2022_challenge/DFUC2022_train_release/DFUC2022_train_masks",
-    "experiment_name": "long_train_even_less_aug"
   }
 }

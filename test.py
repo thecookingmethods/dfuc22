@@ -7,6 +7,7 @@ from kunet_dk.test import main as kunet_testing
 from patches_cls_dk.test_classifier import main as patches_cls_testing
 from patches_cls_dk.test_segm import main as patches_segm_testing
 from patches_cls_dk.test_pipeline import main as patches_pipeline_testing
+from yolo_det_unet_segm.eval_flow import main as yolo_eval_flow
 
 
 def main(config_file_path):
@@ -20,7 +21,7 @@ def main(config_file_path):
         elif config['patches_cls_dk']['phase'] == 'segm':
             patches_segm_testing(config)
         elif config['patches_cls_dk']['phase'] == 'pipeline':
-            patches_pipeline_testing(config)
+            yolo_eval_flow(config)
 
     exit(0)
 

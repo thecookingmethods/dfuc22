@@ -4,6 +4,8 @@
 # per user
 rsync_to_prometheus.sh
 *experiment
+yolo_db
+*.weights
 
 # pycharm
 .idea

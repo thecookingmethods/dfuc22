@@ -1,23 +1,23 @@
 import argparse
 import os
 
-from kunet_dk.unetlike import Unetlike
-from kunet_dk.data_generator import DataGenerator
+from kunet2_dk.unetlike import Unetlike
+from kunet2_dk.data_generator import DataGenerator
 from utils import load_files_paths, read_imgs_with_masks, get_foldwise_split, plot_and_save_fig, \
     get_experiment_model_name, get_experiment_dir
 
 
 def main(config):
-    fold_no = config['kunet_dk']['fold_no']
-    folds_count = config['kunet_dk']['folds_count']
-    imgs_dir = config['kunet_dk']['imgs_dir']
-    masks_dir = config['kunet_dk']['masks_dir']
-    batch_size = config['kunet_dk']['batch_size']
-    epochs = config['kunet_dk']['epochs']
-    experiment_name = config['kunet_dk']['experiment_name']
+    fold_no = config['kunet2_dk']['fold_no']
+    folds_count = config['kunet2_dk']['folds_count']
+    imgs_dir = config['kunet2_dk']['imgs_dir']
+    masks_dir = config['kunet2_dk']['masks_dir']
+    batch_size = config['kunet2_dk']['batch_size']
+    epochs = config['kunet2_dk']['epochs']
+    experiment_name = config['kunet2_dk']['experiment_name']
     experiment_type = config['experiment_type']
     experiment_artifacts_root_dir = config['experiment_artifacts_root_dir']
-    net_input_size = config['kunet_dk']['net_input_size']
+    continue_training_path = config['kunet2_dk']['continue_training_path']
 
     experiment_dir = get_experiment_dir(experiment_artifacts_root_dir, experiment_name, experiment_type)
     os.makedirs(experiment_dir, exist_ok=True)
@@ -31,7 +31,6 @@ def main(config):
     print(f'experiment_name: {experiment_name}')
     print(f'experiment_type: {experiment_type}')
     print(f'experiment_artifacts_dir: {experiment_artifacts_root_dir}')
-    print(f'net_input_size: {net_input_size}')
 
     imgs_masks_pairs = load_files_paths(imgs_dir, masks_dir)
 
@@ -40,10 +39,13 @@ def main(config):
     train_imgs, train_masks = read_imgs_with_masks(train_set)
     val_imgs, val_masks = read_imgs_with_masks(val_set)
 
-    train_gen = DataGenerator(train_imgs, train_masks, batch_size, net_input_size, training=True)
-    val_gen = DataGenerator(val_imgs, val_masks, batch_size, net_input_size)
+    train_gen = DataGenerator(train_imgs, train_masks, batch_size, [320, 480], training=True)
+    val_gen = DataGenerator(val_imgs, val_masks, batch_size, [320, 480])
 
-    net = Unetlike([*net_input_size, 6], get_experiment_model_name(experiment_name, fold_no), experiment_dir)
+    net = Unetlike([320, 480, 6], get_experiment_model_name(experiment_name, fold_no), experiment_dir)
+    if continue_training_path is not None:
+        net.load(continue_training_path)
+
     history = net.fit(train_gen, val_gen,
                       epochs=epochs,
                       initial_epoch=0,
@@ -57,10 +59,25 @@ def main(config):
                       'epoch', 'loss',
                       os.path.join(experiment_dir, f'fold_{fold_no}_loss_{experiment_name}'))
 
-    plot_and_save_fig([history.history['accuracy'], history.history['val_accuracy']],
+    plot_and_save_fig([history.history['rdr_metric'], history.history['val_rdr_metric']],
                       ['training', 'validation'],
-                      'epoch', 'accuracy',
-                      os.path.join(experiment_dir, f'fold_{fold_no}_accuracy_{experiment_name}'))
+                      'epoch', 'rdr_metric',
+                      os.path.join(experiment_dir, f'fold_{fold_no}_rdr_metric_{experiment_name}'))
+
+    plot_and_save_fig([history.history['siou_metric'], history.history['val_siou_metric']],
+                      ['training', 'validation'],
+                      'epoch', 'siou_metric',
+                      os.path.join(experiment_dir, f'fold_{fold_no}_siou_metric_{experiment_name}'))
+
+    plot_and_save_fig([history.history['r_r_metric'], history.history['val_r_r_metric']],
+                      ['training', 'validation'],
+                      'epoch', 'r_r_metric',
+                      os.path.join(experiment_dir, f'fold_{fold_no}_r_r_metric_{experiment_name}'))
+
+    plot_and_save_fig([history.history['dist_metric'], history.history['val_dist_metric']],
+                      ['training', 'validation'],
+                      'epoch', 'dist_metric',
+                      os.path.join(experiment_dir, f'fold_{fold_no}_dist_metric_{experiment_name}'))
 
     #test_imgs, test_masks = read_imgs_with_masks(test_set)
 

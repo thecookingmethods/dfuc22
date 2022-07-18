@@ -1,11 +1,10 @@
-import os
-
 from tensorflow import keras
 from keras import layers
-from custom_metrics import dice_coef, plus_jaccard_distance_loss, dice, jaccard_distance_loss
+from custom_metrics import dice_coef, plus_jaccard_distance_loss, dice
+import os
 
 
-class Unetlike:
+class UnetlikeDet:
     dependencies = {
         'dice': dice,
         'dice_coef': dice_coef,
@@ -14,7 +13,7 @@ class Unetlike:
 
     def __init__(self, img_size, model_name, model_save_dir):
         #  set some params
-        self._initial_lr = 1e-3
+        self._initial_lr = 1e-4
 
         self._model_file_name = f'{model_name}'
         self._model_save_dir = model_save_dir
@@ -41,7 +40,7 @@ class Unetlike:
 
     def load(self, model_path):
 
-        model = keras.models.load_model(model_path, custom_objects=Unetlike.dependencies)
+        model = keras.models.load_model(model_path, custom_objects=UnetlikeDet.dependencies)
         self._model = model
 
     def fit(self, train_gen, val_gen, epochs, training_verbosity,
@@ -49,8 +48,7 @@ class Unetlike:
             initial_epoch):
         callbacks = [
             keras.callbacks.ModelCheckpoint(
-                os.path.join(self._model_save_dir, self._model_file_name), save_best_only=True),
-            keras.callbacks.LearningRateScheduler(lr_scheduler)
+                os.path.join(self._model_save_dir, self._model_file_name), save_best_only=True)
         ]
         history = self._model.fit(train_gen,
                                   epochs=epochs+initial_epoch,
@@ -106,17 +104,10 @@ class Unetlike:
             x = layers.add([x, residual])
             previous_block_activation = x
 
-        outputs = layers.Conv2D(1, 3, activation="sigmoid", padding="same")(x)
+        outputs_mc = layers.Conv2D(1, 3, activation="sigmoid", padding="same")(x)
+        outputs_mhw = layers.Conv2D(2, 3, activation="relu", padding="same")(x)
+
+        outputs = layers.Concatenate()([outputs_mc, outputs_mhw])
 
         model = keras.Model(inputs, outputs)
         return model
-
-
-def lr_scheduler(epoch, lr):
-    if epoch <= 250:
-        lr = 1e-3
-    elif epoch < 450:
-        lr = 1e-4
-    else:
-        lr = 1e-5
-    return lr

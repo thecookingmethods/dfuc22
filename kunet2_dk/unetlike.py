@@ -1,20 +1,26 @@
 import os
-
+from keras import backend as K
 from tensorflow import keras
 from keras import layers
-from custom_metrics import dice_coef, plus_jaccard_distance_loss, dice, jaccard_distance_loss
+from custom_metrics import hehe_loss, rdr_metric, siou_metric, r_r_metric, siou_r_pred_large_metric, \
+    siou_r_true_large_metric, dist_metric, dist_rr, lr_scheduler
 
 
 class Unetlike:
     dependencies = {
-        'dice': dice,
-        'dice_coef': dice_coef,
-        'jaccard_sth': plus_jaccard_distance_loss(keras.losses.BinaryCrossentropy())
+        'hehe_loss': hehe_loss,
+        'siou_metric': siou_metric,
+        'rdr_metric': rdr_metric,
+        'dist_metric': dist_metric,
+        'r_r_metric': r_r_metric,
+        'siou_r_true_large_metric': siou_r_true_large_metric,
+        'siou_r_pred_large_metric': siou_r_pred_large_metric
+
     }
 
     def __init__(self, img_size, model_name, model_save_dir):
         #  set some params
-        self._initial_lr = 1e-3
+        self._initial_lr = 1e-4
 
         self._model_file_name = f'{model_name}'
         self._model_save_dir = model_save_dir
@@ -36,13 +42,15 @@ class Unetlike:
     def _compile(self):
         optimizer = keras.optimizers.Adam(learning_rate=self._initial_lr)
         self._model.compile(optimizer=optimizer,
-                            loss=plus_jaccard_distance_loss(keras.losses.BinaryCrossentropy()),
-                            metrics=['accuracy', dice_coef, dice])
+                            loss=hehe_loss,
+                            metrics=[siou_metric, rdr_metric, dist_metric, r_r_metric,
+                                     siou_r_pred_large_metric, siou_r_true_large_metric])
 
     def load(self, model_path):
 
         model = keras.models.load_model(model_path, custom_objects=Unetlike.dependencies)
         self._model = model
+        #K.set_value(model.optimizer.learning_rate, 1000)
 
     def fit(self, train_gen, val_gen, epochs, training_verbosity,
             max_queue_size, workers, use_multiprocessing,
@@ -50,7 +58,7 @@ class Unetlike:
         callbacks = [
             keras.callbacks.ModelCheckpoint(
                 os.path.join(self._model_save_dir, self._model_file_name), save_best_only=True),
-            keras.callbacks.LearningRateScheduler(lr_scheduler)
+            keras.callbacks.LearningRateScheduler(lr_scheduler, verbose=1)
         ]
         history = self._model.fit(train_gen,
                                   epochs=epochs+initial_epoch,
@@ -60,8 +68,7 @@ class Unetlike:
                                   verbose=training_verbosity,
                                   max_queue_size=max_queue_size,
                                   workers=workers,
-                                  use_multiprocessing=use_multiprocessing
-                                  )
+                                  use_multiprocessing=use_multiprocessing)
         return history
 
     def _create_model(self, img_size):
@@ -106,17 +113,11 @@ class Unetlike:
             x = layers.add([x, residual])
             previous_block_activation = x
 
-        outputs = layers.Conv2D(1, 3, activation="sigmoid", padding="same")(x)
+        x = layers.Flatten()(x)
+        output_c = layers.Dense(2, activation='sigmoid')(x)
+        output_r = layers.Dense(1, activation='sigmoid')(x)
+
+        outputs = layers.Concatenate()([output_c, output_r])
 
         model = keras.Model(inputs, outputs)
         return model
-
-
-def lr_scheduler(epoch, lr):
-    if epoch <= 250:
-        lr = 1e-3
-    elif epoch < 450:
-        lr = 1e-4
-    else:
-        lr = 1e-5
-    return lr
