@@ -3,7 +3,7 @@
 import os
 import glob
 
-from kunet_dk.unetlike import Unetlike
+from unetlike import Unetlike
 from utils import norm_img, get_experiment_model_name, get_experiment_dir
 
 from skimage import color

@@ -115,3 +115,11 @@ def calculate_dice(imgs, masks, pred_func, *pred_func_additional_args):
         examples_counter += 1.0
     dice_per_image = dice_sum / examples_counter
     return dice_per_image
+
+
+def get_experiment_dir(experiment_artifacts_root_dir, experiment_name, experiment_type):
+    return os.path.join(experiment_artifacts_root_dir, f'{experiment_name}-{experiment_type}_experiment')
+
+
+def get_experiment_model_name(experiment_name, fold_no):
+    return f'{experiment_name}_{fold_no}.h5'

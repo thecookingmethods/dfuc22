@@ -1,0 +1,52 @@
+{
+  "experiment_type": "kunet_dk",
+  "experiment_artifacts_root_dir": "./",
+
+    "kunet_dk": {
+    "fold_no": 0,
+    "folds_count": 5,
+    "imgs_dir": "/home/darekk/dev/dfuc2022_challenge/DFUC2022_train_release/DFUC2022_train_images",
+    "masks_dir": "/home/darekk/dev/dfuc2022_challenge/DFUC2022_train_release/DFUC2022_train_masks",
+    "batch_size": 8,
+    "epochs": 10,
+    "experiment_name": "test_segm",
+    "net_input_size": [320, 480]
+  },
+
+  "kunet2_dk": {
+    "fold_no": 1,
+    "folds_count": 5,
+    "imgs_dir": "/home/darekk/dev/dfuc2022_challenge/DFUC2022_train_release/DFUC2022_train_images",
+    "masks_dir": "/home/darekk/dev/dfuc2022_challenge/DFUC2022_train_release/DFUC2022_train_masks",
+    "batch_size": 8,
+    "epochs": 170,
+    "experiment_name": "test",
+    "continue_training_path": null, "_test":"/home/darekk/dev/dfuc2022_challenge/dfuc22_2/test-kunet2_dk_experiment/test_1.h5"
+  },
+
+  "detection": {
+    "fold_no": 0,
+    "folds_count": 5,
+    "imgs_dir": "/home/darekk/dev/dfuc2022_challenge/DFUC2022_train_release/DFUC2022_train_images",
+    "masks_dir": "/home/darekk/dev/dfuc2022_challenge/DFUC2022_train_release/DFUC2022_train_masks",
+    "batch_size": 8,
+    "epochs": 10,
+    "experiment_name": "test",
+    "phase": "segm",
+    "patch_size": [64, 64]
+  },
+
+  "patches_cls_dk": {
+    "fold_no": 0,
+    "folds_count": 5,
+    "imgs_dir": "/home/darekk/dev/dfuc2022_challenge/DFUC2022_train_release/DFUC2022_train_images",
+    "masks_dir": "/home/darekk/dev/dfuc2022_challenge/DFUC2022_train_release/DFUC2022_train_masks",
+    "batch_size": 8,
+    "epochs": 50,
+    "experiment_name": "test",
+    "phase": "segm",
+    "patch_size": [256, 256]
+  }
+
+
+}
