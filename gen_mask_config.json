@@ -1,0 +1,13 @@
+{
+  "experiment_type": "kunet_dk",
+  "experiment_artifacts_root_dir": "./",
+
+  "kunet_dk": {
+    "folds_count": 5,
+    "imgs_dir": "/home/user/dfuc2022_challenge/DFUC2022_val_release",
+    "dest_masks_dir": "/home/user/dfuc2022_challenge/submits_ares/val_masks_hem_from_scratch",
+    "experiment_name": "hem_retrain",
+    "net_input_size": [320, 480],
+    "step_ratio": 10
+  }
+}

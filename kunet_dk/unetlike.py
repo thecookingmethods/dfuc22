@@ -73,7 +73,7 @@ class Unetlike:
 
         previous_block_activation = x
 
-        for filters in [64, 128, 256]:
+        for filters in [64, 128, 256, 512]:
             x = layers.Activation("relu")(x)
             x = layers.Conv2D(filters, 3, padding="same")(x)
             x = layers.BatchNormalization()(x)
@@ -90,7 +90,7 @@ class Unetlike:
             x = layers.add([x, residual])
             previous_block_activation = x
 
-        for filters in [256, 128, 64, 32]:
+        for filters in [512, 256, 128, 64, 32]:
             x = layers.Activation("relu")(x)
             x = layers.Conv2DTranspose(filters, 3, padding="same")(x)
             x = layers.BatchNormalization()(x)
@@ -113,9 +113,9 @@ class Unetlike:
 
 
 def lr_scheduler(epoch, lr):
-    if epoch <= 250:
+    if epoch <= 130:
         lr = 1e-3
-    elif epoch < 450:
+    elif epoch < 650:
         lr = 1e-4
     else:
         lr = 1e-5

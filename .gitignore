@@ -1,13 +1,6 @@
 # models
 *.h5
 
-# per user
-rsync_to_prometheus.sh
-*experiment
-yolo_db
-yolo_db_test
-*.weights
-
 # pycharm
 .idea
 

@@ -4,6 +4,7 @@ import numpy as np
 from imgaug import augmenters as iaa
 from tensorflow import keras
 from skimage import color
+from skimage.measure import label, regionprops
 
 from utils import norm_img
 
@@ -39,9 +40,10 @@ class DataGenerator(keras.utils.Sequence):
             ], random_order=True)
 
     def __len__(self):
-        return int(math.ceil(self._no_of_examples / self._batch_size))
+        return int(math.floor(self._no_of_examples / self._batch_size))
 
     def __getitem__(self, idx):
+
         slice_idx_from = idx * self._batch_size
         slice_idx_to = (idx + 1) * self._batch_size
         if slice_idx_to > self._no_of_examples:
@@ -58,13 +60,56 @@ class DataGenerator(keras.utils.Sequence):
         x_out = np.zeros((current_batch_size, *self._network_input_wh, self._image_channels), dtype=np.float32)
         y_out = np.zeros((current_batch_size, *self._network_input_wh, 1), dtype=np.float32)
         for a in range(x_out.shape[0]):
-            if not self._training:
-                rows_offset, cols_offset = [(y - x) // 2 for x, y in zip(self._network_input_wh, self._image_wh)]
+
+            mask = y[a].astype(np.float32)
+            mask[mask > 0.5] = 1.0
+            mask[mask <= 0.5] = 0.0
+            labeled_mask = label(mask[:, :, 0])
+            regions = regionprops(labeled_mask)
+            if len(regions) > 0:
+                region_idx = np.random.randint(len(regions))
+                region = regions[region_idx]
+                center_h, center_w = int(region.centroid[0]), int(region.centroid[1])
+                from_h, to_h = region.bbox[0], region.bbox[2]
+                from_w, to_w = region.bbox[1], region.bbox[3]
+
+                rnd = np.random.randint(0, 100)
+                if rnd < 75:
+                    center_h_offset = np.random.randint(from_h + (center_h - from_h) // 4, to_h - (to_h - center_h) // 4)
+                    center_w_offset = np.random.randint(from_w + (center_w - from_w) // 4, to_w - (to_w - center_w) // 4)
+                elif 75 < rnd < 90:
+                    center_h_offset = np.random.randint(center_h - self._network_input_wh[0], center_h + self._network_input_wh[0])
+                    center_w_offset = np.random.randint(center_w - self._network_input_wh[1], center_w + self._network_input_wh[1])
+                else:
+                    center_h_offset = np.random.randint(self._network_input_wh[0] // 2,
+                                                        self._image_wh[0] - self._network_input_wh[0] // 2)
+                    center_w_offset = np.random.randint(self._network_input_wh[1] // 2,
+                                                        self._image_wh[1] - self._network_input_wh[1] // 2)
             else:
-                rows_offset = np.random.randint(0, self._image_wh[0] - self._network_input_wh[0])
-                cols_offset = np.random.randint(0, self._image_wh[1] - self._network_input_wh[1])
-            x_rgb = x[a, rows_offset:rows_offset + self._network_input_wh[0],
-                                     cols_offset:cols_offset + self._network_input_wh[1], :]
+                center_h_offset = np.random.randint(self._network_input_wh[0] // 2,
+                                                    self._image_wh[0] - self._network_input_wh[0] // 2)
+                center_w_offset = np.random.randint(self._network_input_wh[1] // 2,
+                                                    self._image_wh[1] - self._network_input_wh[1] // 2)
+
+            from_h = center_h_offset - self._network_input_wh[0]//2
+            to_h = center_h_offset + self._network_input_wh[0]//2
+            if from_h < 0:
+                from_h = 0
+                to_h = self._network_input_wh[0]
+            elif to_h > self._image_wh[0]:
+                from_h = self._image_wh[0] - self._network_input_wh[0]
+                to_h = self._image_wh[0]
+
+            from_w = center_w_offset - self._network_input_wh[1] // 2
+            to_w = center_w_offset + self._network_input_wh[1] // 2
+            if from_w < 0:
+                from_w = 0
+                to_w = self._network_input_wh[1]
+            elif to_w > self._image_wh[1]:
+                from_w = self._image_wh[1] - self._network_input_wh[1]
+                to_w = self._image_wh[1]
+
+            x_rgb = x[a, from_h:to_h, from_w:to_w, :]
 
             x_lab = color.rgb2lab(x_rgb)
 
@@ -76,8 +121,7 @@ class DataGenerator(keras.utils.Sequence):
             x_out[a, :, :, :3] = x_rgb
             x_out[a, :, :, 3:] = x_lab
 
-            mask = y[a, rows_offset:rows_offset + self._network_input_wh[0],
-                   cols_offset:cols_offset + self._network_input_wh[1], :]
+            mask = y[a, from_h:to_h, from_w:to_w, :]
             mask = norm_img(mask.astype(np.float32))
             y_out[a, :, :, :] = mask
 
