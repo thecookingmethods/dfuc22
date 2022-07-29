@@ -1,13 +1,14 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 from kunet_dk.gen_masks import main as gen_masks_kunet
+
 import json
 import argparse
 
 
 def main(config):
-    gen_masks_kunet(config)
-
+    if config['experiment_type'] == 'kunet_dk':
+        gen_masks_kunet(config)
 
 def read_config(path):
     with open(path, 'r') as f:
